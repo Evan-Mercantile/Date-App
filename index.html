@@ -77,6 +77,19 @@ textarea{resize:vertical;min-height:4.5rem}
 .temp{width:100%;accent-color:var(--hot);margin:.4rem 0 .2rem}
 .tl{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem}
 .big{font-size:3.4rem;margin:0 0 .4rem}
+.nav{position:fixed;top:calc(env(safe-area-inset-top,0px) + .7rem);right:.8rem;z-index:6;padding:.5em 1.1em;background:var(--card2);border:1px solid var(--line);color:var(--text);font-weight:500;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.nav[hidden]{display:none}
+.bk{display:grid;gap:.8rem;margin:1.2rem 0;text-align:left}
+.card{border:1px solid var(--line);border-radius:1.2rem;background:var(--card);padding:1rem 1.1rem}
+.card.off{opacity:.55}
+.card h4{margin:0 0 .15rem;font:italic 700 1.2rem/1.2 "Fraunces",Georgia,serif}
+.card p{margin:.15rem 0;color:var(--muted)}
+.tag{display:inline-block;font:500 .85rem "DM Sans",sans-serif;padding:.1em .75em;border-radius:999px;background:var(--card2);margin-left:.5rem;vertical-align:middle}
+.tag.ok{background:#2f9e6b;color:#fff}.tag.no{background:#777;color:#fff}
+.mini{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem}
+.mini button{padding:.4em 1em;background:var(--card2);border:1px solid var(--line);font-size:.95rem}
+.mini .danger{color:var(--hot)}
+.warn{color:var(--gold);font-weight:500;margin:0;text-align:center}
 @media (max-width:30rem){.row{grid-template-columns:1fr}.glass{padding:1.6rem 1.1rem}}
 @media (prefers-reduced-motion:reduce){.hearts{display:none}.pulse{animation:none}*{transition:none!important;scroll-behavior:auto!important}}
 </style>
@@ -84,6 +97,7 @@ textarea{resize:vertical;min-height:4.5rem}
 <body>
 <div class="hearts" id="hearts" aria-hidden="true"></div>
 <canvas id="fx" aria-hidden="true"></canvas>
+<button class="nav" id="nav" type="button" hidden>📅 Nos dates</button>
 <main>
   <section class="screen glass" id="ask">
     <div class="pulse" aria-hidden="true">💗</div>
@@ -130,15 +144,24 @@ textarea{resize:vertical;min-height:4.5rem}
           </div>
         </div>
 
+        <p class="warn" id="warn" aria-live="polite"></p>
         <button class="go" type="submit">Valider notre date</button>
       </form>
     </div>
   </section>
 
+  <section class="screen glass" id="list" hidden>
+    <div class="pulse" aria-hidden="true">📅</div>
+    <h2>Nos dates</h2>
+    <p class="sub" id="lsub">Tout est gardé en ligne.</p>
+    <div class="bk" id="bk"></div>
+    <div class="acts"><button type="button" id="back">Retour</button><button type="button" class="main" id="newd">Planifier un date</button></div>
+  </section>
+
   <section class="screen glass" id="done" hidden>
     <div class="pulse" aria-hidden="true">💞</div>
     <h2>C’est noté !</h2>
-    <p class="sub">Envoie-moi ce message pour confirmer.</p>
+    <p class="sub" id="dsub">Envoie-moi ce message pour confirmer.</p>
     <textarea class="msg" id="out" readonly aria-label="Message à envoyer"></textarea>
     <div class="acts">
       <a class="main" id="wa" target="_blank" rel="noopener">WhatsApp</a>
@@ -232,6 +255,7 @@ textarea{resize:vertical;min-height:4.5rem}
   }
   $('form').addEventListener('submit',function(e){
     e.preventDefault();
+    if(clash())return;
     var picks=[].slice.call($('ideas').querySelectorAll('input:checked')).map(function(i){return i.value});
     var o=$('other').value.trim();if(o)picks.push(o);
     var txt='Oui ! 💕 Voici ma proposition pour notre date :\n';
@@ -245,12 +269,83 @@ textarea{resize:vertical;min-height:4.5rem}
       txt+='• Température : '+['tiède 😇','chaude 😏','brûlante 🔥'][tp]+'\n';
     }
     txt+='\nJ’ai hâte !';
-    $('out').value=txt;
+    $('out').value=txt;save(picks,sp,tp,nt);
     var enc=encodeURIComponent(txt);
     $('wa').href='https://wa.me/?text='+enc;
     $('sms').href='sms:?&body='+enc;
     $('plan').hidden=true;$('done').hidden=false;window.scrollTo(0,0);burst();
   });
+
+  // Stockage en ligne
+  var DB=null,ME=null,OWN=false,rows=[],prev='ask',armed='';
+  var SCR=['ask','plan','done','list'];
+  function show(id){SCR.forEach(function(s){$(s).hidden=(s!==id)});window.scrollTo(0,0)}
+  function cur(){return SCR.filter(function(s){return !$(s).hidden})[0]||'ask'}
+  function when(w){try{return new Date(w.slice(0,10)+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})+' à '+w.slice(11).replace(':','h')}catch(e){return w}}
+  function clash(){
+    var w=$('date').value+'T'+$('time').value;
+    var hit=rows.some(function(r){return r.when===w&&r.status!=='annulé'});
+    $('warn').textContent=hit?'Ce créneau est déjà pris. Choisis une autre date ou une autre heure.':'';
+    return hit;
+  }
+  async function save(picks,sp,tp,nt){
+    if(!DB)return;
+    try{
+      var id='d'+Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+      await DB.doc('dates/'+id).set({when:$('date').value+'T'+$('time').value,ideas:picks.join(', '),note:nt,spicy:sp.join(', '),temp:tp,status:'en attente',by:ME,created:Date.now()});
+      $('dsub').textContent='Ton date est enregistré en ligne. Tu peux aussi m’envoyer ce message.';
+    }catch(e){}
+  }
+  async function act(r,what){
+    try{
+      var ref=DB.doc('dates/'+r._id);
+      if(what==='del'){await ref.delete()}else{await ref.update({status:what})}
+    }catch(e){}
+  }
+  function btn(label,cls,fn){var b=document.createElement('button');b.type='button';b.textContent=label;if(cls)b.className=cls;b.addEventListener('click',fn);return b}
+  function draw(){
+    var box=$('bk');box.textContent='';
+    var list=rows.slice().sort(function(a,b){return a.when<b.when?-1:1});
+    $('lsub').textContent=list.length?'Tout est gardé en ligne.':'Aucun date pour l’instant. Le premier est à planifier.';
+    list.forEach(function(r){
+      var mine=OWN||(ME&&r.by===ME);
+      var c=document.createElement('div');c.className='card'+(r.status==='annulé'?' off':'');
+      var h=document.createElement('h4');h.textContent=when(String(r.when||''));
+      var tg=document.createElement('span');tg.className='tag '+(r.status==='confirmé'?'ok':r.status==='annulé'?'no':'');tg.textContent=r.status||'en attente';
+      h.appendChild(tg);c.appendChild(h);
+      var p=document.createElement('p');p.textContent=r.ideas||'Surprise';c.appendChild(p);
+      if(r.note){var n2=document.createElement('p');n2.textContent='« '+r.note+' »';c.appendChild(n2)}
+      if(mine&&r.spicy){var s2=document.createElement('p');s2.textContent='🔥 '+r.spicy+' ('+['tiède','chaude','brûlante'][r.temp|0]+')';c.appendChild(s2)}
+      var m=document.createElement('div');m.className='mini';
+      if(OWN&&r.status==='en attente')m.appendChild(btn('Confirmer','',function(){act(r,'confirmé')}));
+      if(mine&&r.status!=='annulé')m.appendChild(btn('Annuler','',function(){act(r,'annulé')}));
+      if(mine&&r.status==='annulé')m.appendChild(btn('Rétablir','',function(){act(r,'en attente')}));
+      if(OWN){
+        var k=r._id,d=btn(armed===k?'Sûr·e ?':'Supprimer','danger',function(){
+          if(armed===k){armed='';act(r,'del')}else{armed=k;draw()}
+        });m.appendChild(d);
+      }
+      if(m.children.length)c.appendChild(m);
+      box.appendChild(c);
+    });
+  }
+  $('nav').addEventListener('click',function(){var c=cur();if(c!=='list')prev=c;show('list');draw()});
+  $('back').addEventListener('click',function(){show(prev)});
+  $('newd').addEventListener('click',function(){show('plan')});
+  (async function(){
+    try{
+      if(typeof claude==='undefined')return;
+      var u=await claude.use('user'),db=await claude.use('db');
+      if(!db)return;
+      DB=db;
+      if(u){ME=await u.id();OWN=u.isOwner()}
+      $('nav').hidden=false;
+      db.collection('dates').onSnapshot(function(s){
+        rows=s.docs.map(function(d){var x=d.data()||{};x._id=d.id;return x});
+        if(!$('list').hidden)draw();
+      },function(){});
+    }catch(e){}
+  })();
 
   $('copy').addEventListener('click',function(){
     var b=this,t=$('out');
