@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Une question pour toi</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,500;1,9..144,700&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg1:#1d0a26;--bg2:#4a1240;--glow:#ff5d8f;--text:#fff1f4;--muted:#e3b9cb;--card:rgba(255,255,255,.08);--card2:rgba(255,255,255,.14);--line:rgba(255,200,218,.28);
+  --rose:#ff5d8f;--rose-d:#e63c74;--gold:#f6c177;--hot:#ff3b5c;
+  color-scheme:dark;box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]){
+  --bg1:#ffe9ef;--bg2:#ffc4d6;--glow:#ff8fb3;--text:#3a1030;--muted:#7a3b61;--card:rgba(255,255,255,.55);--card2:rgba(255,255,255,.85);--line:rgba(122,59,97,.28);color-scheme:light}}
+:root[data-theme="light"]{--bg1:#ffe9ef;--bg2:#ffc4d6;--glow:#ff8fb3;--text:#3a1030;--muted:#7a3b61;--card:rgba(255,255,255,.55);--card2:rgba(255,255,255,.85);--line:rgba(122,59,97,.28);color-scheme:light}
+*,*::before,*::after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);scroll-behavior:smooth}
+body{margin:0;min-height:100%;font:400 1.05rem/1.55 "DM Sans",system-ui,sans-serif;color:var(--text);
+  background:radial-gradient(70% 50% at 20% 0%,color-mix(in srgb,var(--glow) 35%,transparent),transparent 70%),
+  radial-gradient(80% 60% at 90% 100%,color-mix(in srgb,var(--gold) 22%,transparent),transparent 70%),
+  linear-gradient(160deg,var(--bg2),var(--bg1) 65%) fixed;overflow-x:hidden}
+.hearts,#fx{position:fixed;inset:0;pointer-events:none;z-index:0}
+#fx{z-index:9;width:100%;height:100%}
+.hearts{overflow:hidden}
+.hearts span{position:absolute;bottom:-12%;opacity:0;animation:rise linear infinite;color:var(--rose);filter:blur(.6px)}
+@keyframes rise{0%{transform:translateY(0) rotate(0);opacity:0}10%{opacity:.4}90%{opacity:.18}100%{transform:translateY(-120vh) rotate(30deg);opacity:0}}
+main{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1.1rem 3rem;text-align:center}
+.screen{width:100%;max-width:36rem}
+.screen[hidden]{display:none}
+.glass{background:var(--card);border:1px solid var(--line);border-radius:1.8rem;padding:2rem 1.5rem;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 1.5rem 4rem rgba(0,0,0,.25)}
+h1{font:italic 700 clamp(2.4rem,9vw,4rem)/1.04 "Fraunces",Georgia,serif;margin:0 0 .8rem;letter-spacing:-.02em;text-shadow:0 0 2.5rem color-mix(in srgb,var(--glow) 60%,transparent)}
+h2{font:italic 700 clamp(1.8rem,6vw,2.5rem)/1.1 "Fraunces",Georgia,serif;margin:0 0 .4rem}
+.sub{color:var(--muted);margin:0 auto 1.6rem;max-width:28rem}
+.taunt{min-height:1.6em;color:var(--gold);margin:0 0 .6rem;font-weight:500}
+.pulse{display:inline-block;font-size:3.2rem;margin-bottom:.4rem;animation:beat 1.6s ease-in-out infinite}
+@keyframes beat{0%,100%{transform:scale(1)}15%{transform:scale(1.18)}30%{transform:scale(1)}45%{transform:scale(1.12)}}
+.btns{display:flex;align-items:center;justify-content:center;gap:1.1rem;flex-wrap:wrap;min-height:8rem}
+button{font:inherit;cursor:pointer;border:0;border-radius:999px;color:inherit}
+#yes{--k:1;font-size:calc(1.15rem*var(--k));padding:.75em 2em;background:linear-gradient(135deg,var(--rose),var(--hot));color:#fff;font-weight:700;
+  box-shadow:0 .5em 1.6em rgba(255,59,92,.5),inset 0 1px 0 rgba(255,255,255,.35);transition:font-size .35s cubic-bezier(.3,1.4,.5,1),filter .2s}
+#yes:hover{filter:brightness(1.1)}
+#no{--s:1;padding:.7em 1.6em;background:var(--card);color:var(--muted);border:1.5px solid var(--line);
+  transform:scale(var(--s));transition:left .28s ease,top .28s ease,transform .3s ease;touch-action:none}
+#no.free{position:fixed;z-index:5}
+:focus-visible{outline:3px solid var(--gold);outline-offset:3px}
+form{text-align:left;display:grid;gap:1.5rem;margin-top:1.4rem}
+fieldset{border:0;padding:0;margin:0;min-width:0}
+legend,label.l{font-weight:700;margin-bottom:.6rem;display:block;padding:0}
+.chips{display:flex;flex-wrap:wrap;gap:.5rem}
+.chips input{position:absolute;opacity:0;pointer-events:none}
+.chips label{padding:.5em 1em;border:1.5px solid var(--line);border-radius:999px;background:var(--card);cursor:pointer;transition:background .2s,transform .15s}
+.chips label:hover{background:var(--card2)}
+.chips input:checked+label{background:linear-gradient(135deg,var(--rose),var(--hot));border-color:transparent;color:#fff;font-weight:500;transform:scale(1.03)}
+.chips input:focus-visible+label{outline:3px solid var(--gold);outline-offset:2px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+input[type=text],input[type=date],input[type=time],textarea{width:100%;font:inherit;color:var(--text);background:var(--card);border:1.5px solid var(--line);border-radius:1rem;padding:.7em 1em}
+textarea{resize:vertical;min-height:4.5rem}
+::placeholder{color:var(--muted);opacity:.7}
+.go{justify-self:center;font-size:1.15rem;padding:.8em 2.4em;background:linear-gradient(135deg,var(--rose),var(--hot));color:#fff;font-weight:700;box-shadow:0 .5em 1.6em rgba(255,59,92,.45)}
+.msg{width:100%;min-height:10rem;margin:1.2rem 0 1rem;text-align:left}
+.acts{display:flex;gap:.7rem;justify-content:center;flex-wrap:wrap}
+.acts a,.acts button{padding:.65em 1.3em;background:var(--card2);border:1.5px solid var(--line);color:var(--text);text-decoration:none;font:inherit;font-weight:500;border-radius:999px;cursor:pointer}
+.acts .main{background:linear-gradient(135deg,var(--rose),var(--hot));border-color:transparent;color:#fff}
+/* Section cachée tout en bas */
+.deep{margin-top:0;padding-top:.5rem;text-align:center}
+#spark{background:none;font-size:1.3rem;opacity:.22;padding:.6rem;transition:opacity .3s,transform .3s}
+#spark:hover,#spark:focus-visible{opacity:.9;transform:scale(1.2)}
+#secret{margin-top:1rem;text-align:left;border:1px solid color-mix(in srgb,var(--hot) 55%,transparent);border-radius:1.6rem;padding:1.6rem 1.3rem;
+  background:linear-gradient(160deg,color-mix(in srgb,var(--hot) 22%,transparent),rgba(20,0,10,.35));animation:reveal .6s ease both}
+#secret[hidden]{display:none}
+@keyframes reveal{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+#secret h3{font:italic 700 1.6rem/1.15 "Fraunces",Georgia,serif;margin:0 0 .3rem}
+#secret p{color:var(--muted);margin:0 0 1.1rem}
+.temp{width:100%;accent-color:var(--hot);margin:.4rem 0 .2rem}
+.tl{display:flex;justify-content:space-between;color:var(--muted);font-size:.9rem}
+.big{font-size:3.4rem;margin:0 0 .4rem}
+@media (max-width:30rem){.row{grid-template-columns:1fr}.glass{padding:1.6rem 1.1rem}}
+@media (prefers-reduced-motion:reduce){.hearts{display:none}.pulse{animation:none}*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="hearts" id="hearts" aria-hidden="true"></div>
+<canvas id="fx" aria-hidden="true"></canvas>
+<main>
+  <section class="screen glass" id="ask">
+    <div class="pulse" aria-hidden="true">💗</div>
+    <h1>Veux-tu sortir avec moi ?</h1>
+    <p class="sub">Un dîner, une balade, un prétexte pour te voir. Il n’y a qu’une bonne réponse.</p>
+    <p class="taunt" id="taunt" aria-live="polite"></p>
+    <div class="btns">
+      <button id="yes" type="button">Oui</button>
+      <button id="no" type="button">Non</button>
+    </div>
+  </section>
+
+  <section class="screen" id="plan" hidden>
+    <div class="glass">
+      <div class="pulse" aria-hidden="true">💘</div>
+      <h2>Yes ! Alors on organise ça.</h2>
+      <p class="sub">Choisis ce qui te fait envie, je m’occupe du reste.</p>
+      <form id="form">
+        <fieldset>
+          <legend>On fait quoi ? (plusieurs choix possibles)</legend>
+          <div class="chips" id="ideas"></div>
+          <input type="text" id="other" placeholder="Ou une autre idée…" aria-label="Une autre idée" style="margin-top:.7rem">
+        </fieldset>
+        <div class="row">
+          <div><label class="l" for="date">Quel jour ?</label><input type="date" id="date" required></div>
+          <div><label class="l" for="time">À quelle heure ?</label><input type="time" id="time" value="19:30" required></div>
+        </div>
+        <div><label class="l" for="note">Un petit mot (facultatif)</label><textarea id="note" placeholder="Une allergie, un quartier, une tenue de rigueur…"></textarea></div>
+
+        <div class="deep">
+          <button type="button" id="spark" aria-expanded="false" aria-controls="secret" aria-label="Ouvrir le chapitre secret">🔥</button>
+          <div id="secret" hidden>
+            <h3>Chapitre secret</h3>
+            <p>Tu as trouvé. Si tu oses, voici de quoi pimenter la soirée.</p>
+            <fieldset>
+              <legend>Au programme, peut-être…</legend>
+              <div class="chips" id="spicy"></div>
+            </fieldset>
+            <fieldset style="margin-top:1.2rem">
+              <legend>Quelle température pour la soirée ?</legend>
+              <input class="temp" type="range" id="temp" min="0" max="2" step="1" value="0" aria-label="Température de la soirée">
+              <div class="tl"><span>Tiède 😇</span><span>Chaud 😏</span><span>Brûlant 🔥</span></div>
+            </fieldset>
+          </div>
+        </div>
+
+        <button class="go" type="submit">Valider notre date</button>
+      </form>
+    </div>
+  </section>
+
+  <section class="screen glass" id="done" hidden>
+    <div class="pulse" aria-hidden="true">💞</div>
+    <h2>C’est noté !</h2>
+    <p class="sub">Envoie-moi ce message pour confirmer.</p>
+    <textarea class="msg" id="out" readonly aria-label="Message à envoyer"></textarea>
+    <div class="acts">
+      <a class="main" id="wa" target="_blank" rel="noopener">WhatsApp</a>
+      <a id="sms">SMS</a>
+      <button type="button" id="copy">Copier le message</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(function(){
+  var $=function(id){return document.getElementById(id)};
+  var calm=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+
+  // Cœurs flottants
+  var H=$('hearts');
+  for(var i=0;i<16;i++){var s=document.createElement('span');s.textContent='♥';
+    s.style.left=(Math.random()*100)+'%';s.style.fontSize=(14+Math.random()*30)+'px';
+    s.style.animationDuration=(12+Math.random()*16)+'s';s.style.animationDelay=(-Math.random()*22)+'s';H.appendChild(s)}
+
+  function chips(boxId,list,pre){
+    var box=$(boxId);
+    list.forEach(function(t,i){
+      var inp=document.createElement('input');inp.type='checkbox';inp.id=pre+i;inp.value=t;
+      var lab=document.createElement('label');lab.htmlFor=pre+i;lab.textContent=t;
+      box.appendChild(inp);box.appendChild(lab);
+    });
+  }
+  chips('ideas',['Dîner au restaurant','Balade au coucher du soleil','Ciné','Pique-nique','Café et dessert','Bowling','Verre dans un bar','Surprise !'],'i');
+  chips('spicy',['Dîner aux chandelles chez moi','Massage (à tour de rôle)','Bain moussant aux bougies','Film sous la couette','Jeu de cartes avec gages','Danse lente dans le salon','Petit-déjeuner au lit le lendemain 😏','Des bisous. Beaucoup.'],'s');
+
+  var d=new Date();d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  $('date').min=d.toISOString().slice(0,10);
+
+  // Confettis de cœurs
+  var cv=$('fx'),cx=cv.getContext('2d'),parts=[],raf=0;
+  function size(){cv.width=window.innerWidth;cv.height=window.innerHeight}
+  size();window.addEventListener('resize',size);
+  function burst(){
+    if(calm)return;
+    for(var i=0;i<70;i++)parts.push({x:cv.width/2,y:cv.height*.55,vx:(Math.random()-.5)*14,vy:-Math.random()*15-4,
+      r:10+Math.random()*16,rot:Math.random()*6,vr:(Math.random()-.5)*.3,c:['#ff5d8f','#ff3b5c','#f6c177','#ffd6e0'][i%4],life:1});
+    if(!raf)raf=requestAnimationFrame(tick);
+  }
+  function tick(){
+    cx.clearRect(0,0,cv.width,cv.height);
+    parts=parts.filter(function(p){return p.life>0});
+    parts.forEach(function(p){
+      p.vy+=.35;p.x+=p.vx;p.y+=p.vy;p.rot+=p.vr;p.life-=.012;
+      cx.save();cx.globalAlpha=Math.max(p.life,0);cx.translate(p.x,p.y);cx.rotate(p.rot);cx.fillStyle=p.c;cx.font=p.r+'px serif';cx.fillText('♥',-p.r/2,p.r/2);cx.restore();
+    });
+    raf=parts.length?requestAnimationFrame(tick):0;
+    if(!parts.length)cx.clearRect(0,0,cv.width,cv.height);
+  }
+
+  // Bouton Non
+  var yes=$('yes'),no=$('no'),taunt=$('taunt'),n=0;
+  var lines=['','Hé, pas si vite…','Tu es sûr·e ?','Essaie encore, je t’attends.','Il est un peu timide, ce bouton.','Vraiment ?','Là, tu me brises le cœur.','Plus petit, plus rapide…','Le Oui est juste là, regarde.','Ok, je crois qu’il abandonne.'];
+  function dodge(e){
+    if(e&&e.preventDefault)e.preventDefault();
+    n++;
+    taunt.textContent=lines[Math.min(n,lines.length-1)];
+    yes.style.setProperty('--k',Math.min(1+n*0.12,2.3));
+    if(n>3)no.style.setProperty('--s',Math.max(0.25,Math.pow(0.88,n-3)).toFixed(2));
+    var r=no.getBoundingClientRect(),w=r.width||90,h=r.height||44,m=12;
+    var px=e&&e.clientX!=null?e.clientX:window.innerWidth/2,py=e&&e.clientY!=null?e.clientY:window.innerHeight/2;
+    var maxX=window.innerWidth-w-m,maxY=window.innerHeight-h-m,x,y,t=0;
+    do{x=m+Math.random()*Math.max(maxX-m,0);y=m+Math.random()*Math.max(maxY-m,0);t++}
+    while(t<30&&Math.hypot(x+w/2-px,y+h/2-py)<170);
+    if(!no.classList.contains('free')){no.style.left=r.left+'px';no.style.top=r.top+'px';no.classList.add('free');void no.offsetWidth}
+    no.style.left=x+'px';no.style.top=y+'px';
+  }
+  no.addEventListener('pointerenter',dodge);
+  no.addEventListener('pointerdown',dodge);
+  no.addEventListener('click',dodge);
+  window.addEventListener('resize',function(){if(no.classList.contains('free')){no.style.left='20px';no.style.top='20px'}});
+
+  yes.addEventListener('click',function(){
+    $('ask').hidden=true;$('plan').hidden=false;window.scrollTo(0,0);burst();
+  });
+
+  // Chapitre secret
+  $('spark').addEventListener('click',function(){
+    var sec=$('secret'),open=sec.hidden;
+    sec.hidden=!open;this.setAttribute('aria-expanded',String(open));
+    if(open)setTimeout(function(){sec.scrollIntoView({behavior:calm?'auto':'smooth',block:'center'})},60);
+  });
+
+  function fmtDate(v){
+    try{return new Date(v+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}catch(e){return v}
+  }
+  $('form').addEventListener('submit',function(e){
+    e.preventDefault();
+    var picks=[].slice.call($('ideas').querySelectorAll('input:checked')).map(function(i){return i.value});
+    var o=$('other').value.trim();if(o)picks.push(o);
+    var txt='Oui ! 💕 Voici ma proposition pour notre date :\n';
+    txt+=(picks.length?'• Idées : '+picks.join(', ')+'\n':'• Idées : je te laisse la surprise\n');
+    txt+='• Quand : '+fmtDate($('date').value)+' à '+$('time').value.replace(':','h')+'\n';
+    var nt=$('note').value.trim();if(nt)txt+='• Petit mot : '+nt+'\n';
+    var sp=[].slice.call($('spicy').querySelectorAll('input:checked')).map(function(i){return i.value});
+    var tp=+$('temp').value;
+    if(sp.length||tp>0){
+      txt+='\n🔥 Chapitre secret : '+(sp.length?sp.join(', '):'on verra sur place')+'\n';
+      txt+='• Température : '+['tiède 😇','chaude 😏','brûlante 🔥'][tp]+'\n';
+    }
+    txt+='\nJ’ai hâte !';
+    $('out').value=txt;
+    var enc=encodeURIComponent(txt);
+    $('wa').href='https://wa.me/?text='+enc;
+    $('sms').href='sms:?&body='+enc;
+    $('plan').hidden=true;$('done').hidden=false;window.scrollTo(0,0);burst();
+  });
+
+  $('copy').addEventListener('click',function(){
+    var b=this,t=$('out');
+    function ok(){b.textContent='Copié ✓';setTimeout(function(){b.textContent='Copier le message'},1800)}
+    try{navigator.clipboard.writeText(t.value).then(ok,function(){t.select();document.execCommand('copy');ok()})}
+    catch(err){t.select();try{document.execCommand('copy');ok()}catch(e2){}}
+  });
+})();
+</script>
+</body>
+</html>
